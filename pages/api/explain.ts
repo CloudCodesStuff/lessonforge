@@ -17,62 +17,69 @@ type LessonPlan = {
 const openai = new OpenAIApi(configuration)
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
-  const lessonPlan: LessonPlan = req.body
-  console.log('lessonPlan', lessonPlan)
+  if (req.method !== 'POST') return res.status(405).end()
 
-  const response = await openai.createCompletion({
-    model: 'text-davinci-003',
-    prompt: 
-    
-    `Create a detailed lesson plan about ${lessonPlan.topic} with the following format. The grade level should be ${lessonPlan.level} and the description is ${lessonPlan.description}. The class is ${lessonPlan.length} minutes long. You may add items as nessecary to each catagory. Make sure you bold the catagories using <strong></strong> and finish filling out every sentence! MAKE SURE YOU RESPOND IN BULLETS, NOT SENTENCES. Make sure the lesson does not go over the class lenght. 
+  try {
+    const lessonPlan: LessonPlan = req.body
+    console.log('lessonPlan', lessonPlan)
 
-Topic:Topic
-    You sould return links 
-    Learning objectives:
-    Students will be able to....
-    
-    Materials:
-    Pencil
-    Paper
-    Blah
-    etc
-    
-    Intro (duration):
+    const response = await openai.createCompletion({
+      model: 'text-davinci-003',
+      prompt: `
+        Create a detailed lesson plan about ${lessonPlan.topic} with the following format. 
+        The grade level should be ${lessonPlan.level} and the description is ${lessonPlan.description}. 
+        The class is ${lessonPlan.length} minutes long. You may add items as necessary to each category. 
+        Make sure you bold the categories using <strong></strong> and finish filling out every sentence! 
+        MAKE SURE YOU RESPOND IN BULLETS, NOT SENTENCES. Make sure the lesson does not go over the class length. 
 
-    -rtbrtb
-    -rtbrtb
-    -rbrtb
-    -trtb
-    
-    Procedure (duration):
-    -rtbrtb
-    -rtbrtb
-    -rbrtb
-    -trtb
-    
-    Assesment (duration):
-    -rtbrtb
-    -rtbrtb
-    -rbrtb
-    -trtb
-    
-    Conclusion (duration):
-    -rtbrtb
-    -rtbrtb
-    -rbrtb
-    -trtb
-    `,
-    temperature: 0.85,
-    max_tokens: 700,
-    top_p: 1,
-    frequency_penalty: 0,
-    presence_penalty: 0,
-  })
+        Topic: ${lessonPlan.topic}
 
-  const suggestion = response.data?.choices?.[0].text
+        Learning objectives:
+        - 
 
-  if (suggestion === undefined) throw new Error('No suggestion found')
-  res.setHeader('Content-Type', 'text/html')
+        Materials:
+        - Pencil
+        - Paper
+        - Blah
 
-  res.status(200).json({ result: suggestion })
+        Intro (duration):
+        - 
+        - 
+        - 
+        - 
+
+        Procedure (duration):
+        - 
+        - 
+        - 
+        - 
+
+        Assessment (duration):
+        - 
+        - 
+        - 
+        - 
+
+        Conclusion (duration):
+        - 
+        - 
+        - 
+        - 
+      `,
+      temperature: 0.85,
+      max_tokens: 700,
+      top_p: 1,
+      frequency_penalty: 0,
+      presence_penalty: 0,
+    })
+
+    const suggestion = response.data?.choices?.[0].text
+
+    if (suggestion === undefined) throw new Error('No suggestion found')
+    res.setHeader('Content-Type', 'text/html')
+
+    res.status(200).json({ result: suggestion })
+  } catch (error) {
+    console.error(error)
+  }
 }
