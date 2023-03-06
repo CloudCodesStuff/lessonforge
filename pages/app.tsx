@@ -1,12 +1,22 @@
 import type { NextPage } from "next";
+import Image from 'next/image'
+
 import Head from "next/head";
 import { Component, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 import "react-quill/dist/quill.bubble.css";
-import styles from "../styles/Home.module.css";
+import styles from "../styles/text.module.css";
 import { MoonLoader } from "react-spinners";
 import TextEditor from "@/components/txtedit";
+import pdfMake from 'pdfmake/build/pdfmake';
+import pdfFonts from 'pdfmake/build/vfs_fonts';
+import DOMPurify from 'dompurify';
+import { FaRegCopy, FaRegFilePdf, FaCheckCircle } from "react-icons/fa";
+import copy from 'copy-to-clipboard';
+
+pdfMake.vfs = pdfFonts.pdfMake.vfs;
+
 interface LessonPlan {
   topic: string;
   level: string;
@@ -28,6 +38,8 @@ const App: NextPage = () => {
 
   const [suggestion, setSuggestion] = useState("");
   const [loading, setLoading] = useState(false);
+  const [wait, setWait] = useState(false);
+
   const [value, setValue] = useState("");
 
   useEffect(() => {
@@ -38,6 +50,10 @@ const App: NextPage = () => {
     if (typeof window !== "undefined") {
     }
   }, []);
+  const contentStyle = {
+    fontFamily: 'Plus Jakarta Sans, sans-serif',
+    fontSize: '1.2rem'
+  };
 
   const submit = async () => {
     // Check if character limit is exceeded
@@ -45,6 +61,7 @@ const App: NextPage = () => {
     if (lessonPlan.description.length == 0) return setDefError(true);
     if (lessonPlan.topic.length == 0) return setDefError(true);
     if (lessonPlan.length == 0) return setDefError(true);
+    if (lessonPlan.length < 0) return setDefError(true);
 
     // Set loading state
     setLoading(true);
@@ -67,6 +84,44 @@ const App: NextPage = () => {
       setLoading(false);
     }
   };
+  const handleExport = () => {
+    const quillEditor = document.querySelector('.ql-editor');
+    const content = DOMPurify.sanitize(quillEditor.innerText);
+
+
+    const docDefinition = {
+      watermark: { text: 'Lessonplan created with teachify', color: 'blue', opacity: 0.1, bold: true, italics: false },
+
+      content: [
+        { text: 'Lesson Plan', style: 'header' },
+        { text: content, style: 'content' },
+      ],
+      styles: {
+        header: {
+          fontSize: 18,
+          bold: true,
+          margin: [0, 0, 0, 10]
+        },
+        content: {
+          fontSize: 12
+        }
+      }
+    };
+    pdfMake.createPdf(docDefinition).download('lessonplan.pdf');
+  };
+  const handleCopy = () => {
+    const quillEditor = document.querySelector('.ql-editor');
+    const content = DOMPurify.sanitize(quillEditor.innerText);
+    setWait(true)
+    setTimeout(function () {
+
+      setWait(false)
+    }, 2000);
+    copy(content);
+
+
+  };
+
 
   return (
     <div className="m-0 p-0 box-border">
@@ -75,12 +130,12 @@ const App: NextPage = () => {
         <meta name="description" content="Lessonplant generator" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <div className="flex h-screen font-plus">
-        <div className="w-full md:w-1/2 ">
+      <div className="flex flex-col lg:flex-row md:overflow-hidden h-screen font-plus">
+        <div className="flex-col lg:flex-row w-full lg:w-1/2 p-10 ">
           <div className=" p-5">
             <div className="mx-auto w-4/5">
-              <h2 className="text-4xl md:text-5xl my-3 font-bold pb-2">
-                Let's get Started!✌️
+              <h2 className="text-3xl lg:text-4xl my-3 font-bold pb-2">
+                Let's get Started✌️
               </h2>
 
               {/* Error message */}
@@ -200,14 +255,16 @@ const App: NextPage = () => {
 
                 {/* Submit button */}
                 <button
-                  className="bg-indigo-500 text-white rounded-md px-4 py-2 mt-4 hover:bg-indigo-600 transition-colors duration-300 ease-in-out"
+                  type='button'
                   onClick={submit}
-                  disabled={loading}
-                >
+                  className='bg-indigo-500 h-12 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded'>
                   {loading ? (
-                    <MoonLoader color="#ffffff" size={20} />
+                    <div className='flex justify-center items-center gap-4'>
+                      <p>Loading...</p>
+                      <MoonLoader size={20} color='white' />
+                    </div>
                   ) : (
-                    "Generate"
+                    'Generate'
                   )}
                 </button>
 
@@ -216,19 +273,42 @@ const App: NextPage = () => {
             </div>
           </div>
         </div>
-        <div className="w-full md:w-1/2 p-10 border-l-2  ">
+        <div className="flex-col lg:flex-row w-full  lg:w-1/2 overflow-y-scroll border-l-2 border-l-gray-300 p-10 rounded-l-3xl ">
           <div className="flex">
+            {!suggestion && (
+              <div>
+                <h1 className="text-4xl text-center font-bold">Supercharge your teaching success with AI powered lesson planning</h1>
+                <p className="text-md text-center text-gray-500 m-5 ">Save time, improve outcomes, and delight students with AI-generated lesson plans. Create high-quality, standards-aligned lessons in minutes and elevate your teaching game like never before. Go ahead! Click generate!</p>
+                <Image className="w-full max-w-md mx-auto m-16" src="/teacher.svg"
+                  alt="teacher pointing at board side picture"
+                  width={500}
+                  height={500}></Image>
+              </div>
+
+            )}{""}
             {suggestion && (
               <div className="mt-4 w-full">
-                <h2 className="text-3xl ml-12 font-bold">Suggested lesson plan:</h2>
-                <div className="text-lg">
+                <h2 className="text-3xl ml-12  font-bold">Suggested lesson plan:</h2>
+                <div className="text-lg mb-10 ">
                   <ReactQuill
                     value={suggestion}
                     onChange={setSuggestion}
                     theme="bubble"
-                    style={{fontSize: "1.5rem" }}
                     preserveWhitespace={true}
                   />
+                  <div>
+                    <div className="flex text-md shadow-sm  bg-white  whitespace-nowrap ">
+                      <div className="w-1/2 flex h-15 p-3">
+                        <button className="text-gray-500 w-full " onClick={handleExport}><FaRegFilePdf className="inline m-2"></FaRegFilePdf><span className="inline ">Export to PDF</span></button>
+                      </div>
+                      <div className="w-1/2 flex h-15 p-3">
+                        <button className="text-gray-500 w-full " onClick={handleCopy}>{wait ? (<div className="text-green-500 "><FaCheckCircle className="inline m-2"></FaCheckCircle><span className="inline ">Copied!</span></div>) : (<div><FaRegCopy className="inline m-2"> </FaRegCopy><span className="inline ">Copy to Clipboard</span></div>)}</button>
+
+                      </div>
+                    </div>
+
+
+                  </div>
                 </div>
               </div>
             )}{" "}
