@@ -1,4 +1,4 @@
-const test = () => {
+const home = () => {
   return (
     <div>
       <a href="/app">go to app</a>
@@ -6,4 +6,4 @@ const test = () => {
   );
 }
  
-export default test;
+export default home;
