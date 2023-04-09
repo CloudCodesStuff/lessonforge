@@ -1,11 +1,11 @@
 import React, { Component } from "react";
-
+import Link from "next/link";
 class Footer extends Component {
   render() {
     return (
       <footer className="p-4 bg-white md:p-8 lg:p-10 dark:bg-gray-800">
         <div className="mx-auto max-w-screen-xl text-center">
-          <a href="/" className="flex justify-center items-center text-2xl font-semibold text-gray-900 dark:text-white">
+          <Link href="/" className="flex justify-center items-center text-2xl font-semibold text-gray-900 dark:text-white">
 
             <svg className="mr-2 h-8" width="348" height="48" viewBox="0 0 348 48" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M0.927979 37V0.664001H7.21598V37H0.927979Z" fill="black" />
@@ -31,20 +31,20 @@ class Footer extends Component {
             </svg>
 
             
-          </a>
+          </Link>
           <p className="my-6 text-gray-500 dark:text-gray-400">The #1 AI lessonplan studio</p>
           <ul className="flex flex-wrap justify-center items-center mb-6 text-gray-900 dark:text-white">
             <li>
-              <a href="#" className="mr-4 hover:underline md:mr-6 ">About</a>
+              <Link href="#" className="mr-4 hover:underline md:mr-6 ">About</Link>
             </li>
             <li>
-              <a href="#" className="mr-4 hover:underline md:mr-6">FAQs</a>
+              <Link href="#" className="mr-4 hover:underline md:mr-6">FAQs</Link>
             </li>
             <li>
-              <a href="#" className="mr-4 hover:underline md:mr-6">Contact</a>
+              <Link href="#" className="mr-4 hover:underline md:mr-6">Contact</Link>
             </li>
           </ul>
-          <span className="text-sm text-gray-500 sm:text-center dark:text-gray-400">©2023 <a href="#" className="hover:underline">Lessonforge™</a>. All Rights Reserved.</span>
+          <span className="text-sm text-gray-500 sm:text-center dark:text-gray-400">©2023 <Link href="#" className="hover:underline">Lessonforge™</Link>. All Rights Reserved.</span>
         </div>
       </footer>
     );
