@@ -2,6 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { configuration } from '../../utils/constants'
 import { OpenAIApi } from 'openai'
+import { toast } from 'react-toastify'
 
 type Data = {
   result: string
@@ -30,7 +31,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         The grade level should be ${lessonPlan.level} and the description is ${lessonPlan.description}. 
         The class is ${lessonPlan.length} minutes long. You may add items as necessary to each category. 
         Make sure you bold the categories using <strong></strong> and finish filling out every sentence! 
-        MAKE SURE YOU RESPOND IN BULLETS, NOT SENTENCES. Make sure the lesson does not go over the class length. 
+        MAKE SURE YOU RESPOND IN BULLETS, NOT SENTENCES. Make sure the lesson does not go over the class length.
+        Explain carefully and be detailed about every step. Be sure to add more steps. 
 
         Topic: ${lessonPlan.topic}
 
@@ -81,5 +83,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     res.status(200).json({ result: suggestion })
   } catch (error) {
     console.error(error)
+    if (error) throw new Error('Something happened on our end')
   }
 }

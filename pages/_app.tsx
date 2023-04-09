@@ -4,18 +4,24 @@ import Nav from "@/components/nav";
 import Footer from "@/components/footer";
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
-export default function App({ Component, pageProps }: AppProps) {
-  return (
-    <div>
-      <Nav></Nav>
-      
-      <Component {...pageProps} >
-   
- 
-      </Component>
-      <Footer></Footer>
-      <ToastContainer />
+import 'flowbite';
+import { ClerkProvider, SignedIn, SignedOut, SignIn } from '@clerk/nextjs';
+import { useState } from 'react'
 
-       </div>
-  );
+export default function App({
+  Component,
+  pageProps,
+}: AppProps<{
+  initialSession: Session
+}>) {
+
+  return (
+    <ClerkProvider {...pageProps}>
+
+
+      <ToastContainer />
+      
+        <Component {...pageProps} ></Component>
+    </ClerkProvider>
+  )
 }
