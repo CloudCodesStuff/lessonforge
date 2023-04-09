@@ -92,7 +92,7 @@ const App: NextPage = () => {
   };
   const handleExport = () => {
     const quillEditor = document.querySelector(".ql-editor");
-    const content = DOMPurify.sanitize(quillEditor.innerText);
+    const content = DOMPurify.sanitize((quillEditor as HTMLElement).innerText ?? '');
 
     const docDefinition = {
       watermark: {
@@ -108,21 +108,14 @@ const App: NextPage = () => {
         { text: content, style: "content" },
       ],
       styles: {
-        header: {
-          fontSize: 18,
-          bold: true,
-          margin: [0, 0, 0, 10],
-        },
-        content: {
-          fontSize: 12,
-        },
+       
       },
     };
     pdfMake.createPdf(docDefinition).download("lessonplan.pdf");
   };
   const handleCopy = () => {
     const quillEditor = document.querySelector(".ql-editor");
-    const content = DOMPurify.sanitize(quillEditor.innerText);
+    const content = DOMPurify.sanitize((quillEditor as HTMLElement).innerText ?? '');
     setWait(true);
     setTimeout(function () {
       setWait(false);
