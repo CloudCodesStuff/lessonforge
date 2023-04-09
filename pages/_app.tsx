@@ -8,14 +8,13 @@ import 'flowbite';
 import { ClerkProvider, SignedIn, SignedOut, SignIn } from '@clerk/nextjs';
 import { useState } from 'react'
 
-export default function App({
-  Component,
-  pageProps,
-}: AppProps<{
-  initialSession: Session
-}>) {
+interface CustomPageProps { // <--- your custom page props
+   // your props
+}
 
-  return (
+export default function App({ Component, pageProps }: AppProps<CustomPageProps>) {
+                                             //   ^^^ use your custom props here
+  return(
     <ClerkProvider {...pageProps}>
 
 
@@ -23,5 +22,6 @@ export default function App({
       
         <Component {...pageProps} ></Component>
     </ClerkProvider>
-  )
+  ) 
+                    // ^^^^^ pageProps is now typeof CustomPageProps
 }
