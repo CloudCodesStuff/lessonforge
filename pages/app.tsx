@@ -23,6 +23,7 @@ interface LessonPlan {
   length: number;
 }
 
+
 const App: NextPage = () => {
   const maxlength = 500;
   const [lessonPlan, setLessonPlan] = useState<LessonPlan>({
@@ -31,6 +32,47 @@ const App: NextPage = () => {
     description: "",
     length: 0,
   });
+  const prompt = `Create a detailed lesson plan about ${lessonPlan.topic} with the following format. 
+  The grade level should be ${lessonPlan.level} and the description is ${lessonPlan.description}. 
+  The class is ${lessonPlan.length} minutes long. You may add items as necessary to each category. 
+  Make sure you bold the sections, and use bullets and finish filling out every sentence! 
+  MAKE SURE YOU RESPOND IN BULLETS, NOT SENTENCES. Make sure the lesson does not go over the class length.
+  Explain carefully and be detailed about every step. Be sure to add more steps. 
+  
+  Topic: ${lessonPlan.topic}
+  
+  Learning objectives:
+  - 
+  
+  Materials:
+  - Pencil
+  - Paper
+  - Blah
+  
+  Intro (duration):
+  - 
+  - 
+  - 
+  - 
+  
+  Procedure (duration):
+  - 
+  - 
+  - 
+  - 
+  
+  Assessment (duration):
+  - 
+  - 
+  - 
+  - 
+  
+  Conclusion (duration):
+  - 
+  - 
+  - 
+  - 
+  `
 
   const [error, setError] = useState(false);
   const [defaultErr, setDefError] = useState(false);
@@ -54,49 +96,104 @@ const App: NextPage = () => {
     fontSize: "1.2rem",
   };
 
-  const submit = async () => {
+  // const submit = async () => {
+  //   // Check if character limit is exceeded
+  //   if (lessonPlan.description.length > maxlength) return setError(true);
+  //   if (lessonPlan.description.length == 0) return setDefError(true);
+  //   if (lessonPlan.topic.length == 0) return setDefError(true);
+  //   if (lessonPlan.length == 0) return setDefError(true);
+  //   if (lessonPlan.length < 0) return setDefError(true);
+
+  //   // Set loading state
+  //   setLoading(true);
+  //   try {
+  //     const res = await fetch("/api/explain", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify(lessonPlan),
+  //     });
+
+  //     const suggestion: { result: string } = await res.json();
+  //     const { result } = suggestion;
+
+
+  //     setSuggestion(result);
+  //     toast('Lessonplan loaded!', { hideProgressBar: true, autoClose: 2000, type: 'success', position: 'bottom-right' })
+
+  //   } catch (error) {
+  //     console.log(error);
+  //     setLoading(false);
+  //     toast('There was an error on our end.', { hideProgressBar: true, autoClose: 5000, type: 'error', position: 'bottom-right' })
+
+  //   } finally {
+  //     setLoading(false);
+
+  //   }
+  // };
+  const submit = async (e: any) => {
+    setSuggestion(" ")
+
+
+
+
     // Check if character limit is exceeded
+
     if (lessonPlan.description.length > maxlength) return setError(true);
     if (lessonPlan.description.length == 0) return setDefError(true);
     if (lessonPlan.topic.length == 0) return setDefError(true);
     if (lessonPlan.length == 0) return setDefError(true);
     if (lessonPlan.length < 0) return setDefError(true);
-
-    // Set loading state
+    e.preventDefault();
     setLoading(true);
-    try {
-      const res = await fetch("/api/explain", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(lessonPlan),
-      });
+    const response = await fetch("/api/explain", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        prompt,
+      }),
+    });
 
-      const suggestion: { result: string } = await res.json();
-      const { result } = suggestion;
-
-
-      setSuggestion(result);
-      toast('Lessonplan loaded!', { hideProgressBar: true, autoClose: 2000, type: 'success', position: 'bottom-right' })
-
-    } catch (error) {
-      console.log(error);
+    if (!response.ok) {
       setLoading(false);
       toast('There was an error on our end.', { hideProgressBar: true, autoClose: 5000, type: 'error', position: 'bottom-right' })
 
-    } finally {
-      setLoading(false);
+      throw new Error(response.statusText);
 
     }
+
+    // This data is a ReadableStream
+    const data = response.body;
+    if (!data) {
+      return;
+    }
+
+    const reader = data.getReader();
+    const decoder = new TextDecoder();
+    let done = false;
+
+    while (!done) {
+      const { value, done: doneReading } = await reader.read();
+      done = doneReading;
+      const chunkValue = decoder.decode(value);
+      setSuggestion((prev) => prev + chunkValue);
+
+    }
+
+
+    setLoading(false);
+    toast('Lessonplan loaded!', { hideProgressBar: true, autoClose: 2000, type: 'success', position: 'bottom-right' })
+
   };
   const handleExport = () => {
-    const quillEditor = document.querySelector(".ql-editor");
-    const content = DOMPurify.sanitize((quillEditor as HTMLElement).innerText ?? '');
+    const content = suggestion
 
     const docDefinition = {
       watermark: {
-        text: "Lessonplan created with teachify",
+        text: "Lessonplan created with Lessonforge",
         color: "blue",
         opacity: 0.1,
         bold: true,
@@ -108,25 +205,24 @@ const App: NextPage = () => {
         { text: content, style: "content" },
       ],
       styles: {
-       
+
       },
     };
     pdfMake.createPdf(docDefinition).download("lessonplan.pdf");
   };
   const handleCopy = () => {
-    const quillEditor = document.querySelector(".ql-editor");
-    const content = DOMPurify.sanitize((quillEditor as HTMLElement).innerText ?? '');
+
     setWait(true);
     setTimeout(function () {
       setWait(false);
     }, 2000);
-    copy(content);
+    navigator.clipboard.writeText(suggestion);
   };
 
   return (
     <div className="m-0 p-0 box-border ">
       <header>
-        <nav className="bg-white w-full  drop-shadow-2xl flex flex-row border-gray-200 px-4 lg:px-6 py-2.5 ">
+        <nav className="bg-white w-full fixed  drop-shadow-sm flex flex-row border-gray-200 px-4 lg:px-6 py-2.5 ">
           <div className="w-1/2 flex justify-start">                <Link href="/" className="sm:flex hidden items-start">
             <svg className="mr-2 h-7" width="242" height="33" viewBox="0 0 348 48" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M0.927979 37V0.664001H7.21598V37H0.927979Z" fill="black" />
@@ -162,8 +258,8 @@ const App: NextPage = () => {
         <meta name="description" content="Lessonplant generator" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <div className="flex flex-col lg:flex-row overflow-scroll lg:overflow-hidden h-fit lg:h-screen font-plus">
-        <div className="flex-col lg:flex-row w-full lg:w-1/2 p-5 lg:p-10 bg-primary-700 rounded-r-md ">
+      <div className="flex flex-col lg:flex-row overflow-scroll  lg:overflow-hidden h-fit lg:h-screen font-plus">
+        <div className="flex-col lg:flex-row w-full lg:w-2/5 p-5  mt-5  lg:p-10 bg-primary-700 rounded-r-md ">
           <div className=" p-5 bg-white rounded-md">
             <div className="mx-auto w-4/5">
               <h2 className="text-3xl lg:text-4xl my-3 font-bold pb-2">
@@ -177,7 +273,7 @@ const App: NextPage = () => {
                 </p>
               )}
               {defaultErr && (
-                <p className="text-xs relative py-4 text-blue-500">
+                <p className="text-xs relative py-4 text-red-500">
                   Please fill out all sections!
                 </p>
               )}
@@ -308,7 +404,7 @@ const App: NextPage = () => {
             </div>
           </div>
         </div>
-        <div className="flex-col lg:flex-row w-full   lg:w-1/2 overflow-y-scroll p-10 mb-10  ">
+        <div className="flex-col lg:flex-row w-full  mt-5    lg:w-3/5 overflow-y-scroll p-10 mb-10  ">
           <div className="flex">
             {!suggestion && (
               <div>
@@ -333,33 +429,35 @@ const App: NextPage = () => {
             )}
             {""}
             {suggestion && (
-              <div className="mt-4 w-full">
-                <h2 className="text-3xl ml-12  font-bold">
+              <div className="mt-4 h-full  w-full">
+                <h2 className="text-3xl   font-bold">
                   Suggested lesson plan:
                 </h2>
-                <div className="text-lg mb-10 ">
-                  <ReactQuill
+                <div className="text-lg my-5 rounded-md h-screen ">
+                  <textarea
+     
+                  id=""
+                  className="h-full resize-none rounded-lg bg-gray-100 text-black border-primary-700 focus:border-primary-700 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 block w-full sm:text-sm border-2"
                     value={suggestion}
-                    onChange={setSuggestion}
-                    theme="bubble"
-                    preserveWhitespace={true}
+                    onChange={(e) => setSuggestion(e.target.value)}
+
                   />
                 </div>
-                <div className="flex justify-center content-center">
-                  <div className="fixed drop-shadow-2xl p-1 border-2 bg-white rounded-xl border-primary-500 min-w-fit bottom-3 justify-center ">
-                    <div className="flex text-lg bg-white  whitespace-nowrap ">
-                      <div className="w-1/2 flex min-w-5 h-15 p-3">
+                <div className="flex  justify-center content-center">
+                  <div className="sm:fixed drop-shadow-2xl flex-wrap p-1 border-2 bg-opacity-50 bg-white backdrop-blur-sm	 rounded-xl border-slate-400 min-w-fit bottom-3 justify-center ">
+                    <div className="flex text-lg  whitespace-nowrap ">
+                      <div className="w-1/2 flex  min-w-5 h-15 p-3">
                         <button
-                          className="text-primary-500 w-full "
+                          className="bg-primary-700 h-12 hover:bg-indigo-700  text-sm sm:text-base text-white font-bold py-2 px-4 rounded w-full "
                           onClick={handleExport}
                         >
                           <FaRegFilePdf className="inline m-2"></FaRegFilePdf>
                           <span className="inline ">Export to PDF</span>
                         </button>
                       </div>
-                      <div className="flex  min-w-12 h-15 p-3 ">
+                      <div className="flex  min-w-11 h-15 p-3 ">
                         <button
-                          className="text-primary-500 w-full "
+                          className="bg-primary-700 h-12 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded w-full text-sm sm:text-base "
                           onClick={handleCopy}
                         >
                           {wait ? (

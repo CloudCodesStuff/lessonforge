@@ -25,6 +25,7 @@
     "dompurify": "^3.0.1",
     "eslint": "8.33.0",
     "eslint-config-next": "13.1.6",
+    "eventsource-parser": "^1.0.0",
     "flowbite": "^1.6.3",
     "flowbite-react": "^0.4.1",
     "highlight.js": "^11.7.0",
